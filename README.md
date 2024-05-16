@@ -69,3 +69,7 @@ using (var messagingService = new IPCServer<ServerTestClass>(testClass,
 - Pass the server class into the IPCServer
 
 #### See - ExampleTestClasses to example classes
+
+## Future Plans
+- Easier Interface
+- Nuget Package
