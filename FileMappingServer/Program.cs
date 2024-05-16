@@ -16,7 +16,7 @@ using (var messagingService = new IPCServer<ServerTestClass>(testClass,
 		var cancellationTokenSource = new CancellationTokenSource();
 		cancellationTokenSource.CancelAfter(TimeSpan.FromSeconds(20));
 		var arg = Console.ReadLine();
-		var ans = await messagingService.Send(name, cancellationTokenSource.Token, arg); // this test class should be different.
+		var ans = await messagingService.Send<string>(name, cancellationTokenSource.Token, arg); // this test class should be different.
 		Console.WriteLine(ans);
 	}
 }

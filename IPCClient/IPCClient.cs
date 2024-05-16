@@ -46,9 +46,9 @@ namespace IPCClient
 			_writeOnlyPipe?.Dispose();
 			_readOnlyPipe?.Dispose();
 		}
-		public async Task<string> Send(string methodName, CancellationToken token, params string[] args)
+		public async Task<S> Send<S>(string methodName, CancellationToken token, params object[] args)
 		{
-			return await _interop.Send(methodName, token, args);
+			return await _interop.Send<S>(methodName, token, args);
 		}
 	}
 }

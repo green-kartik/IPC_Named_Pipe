@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.IO.Pipes;
 using System.Linq;
 using System.Reflection;
@@ -57,16 +58,19 @@ namespace FileMappingInterface
 				{
 					if (methodInfo.Name == segments[2])
 					{
-						var objs = new object[segments.Length - 3];
-						for (int i = 3; i < segments.Length; i++)
+						var i = 3;
+						var j = 3;
+						var objs = new object[(segments.Length - 3)/2];
+						for (; i < segments.Length ; i+=2)
 						{
-							objs[i - 3] = segments[i];
+							objs[j - 3] = segments[i].GetDataType().GetPrimitive(segments[i+1]);
+							j++;
 						}
 						var rc = _interfaceMethods.GetType().GetMethod(segments[2]).Invoke(_interfaceMethods, objs);
 						var returnValue = rc != null ? rc : "";
-
+						var returnValueAsString = returnValue.GetStringFromPrimitive();
 						_writeOnlyPipeExtension.WriteAsync
-	(Receiver + breakchar + segments[1] + breakchar + segments[2] + breakchar + returnValue).GetAwaiter().GetResult();
+	(Receiver + breakchar + segments[1] + breakchar + segments[2] + breakchar + returnValueAsString).GetAwaiter().GetResult();
 						// we can also use fire and forget
 					}
 				}
@@ -75,19 +79,70 @@ namespace FileMappingInterface
 		}
 
 
-		public async Task<string> Send(string methodName, CancellationToken token, params string[] args)
+		//public async Task<string> Send(string methodName, CancellationToken token, params string[] args)
+		//{
+		//	var ID = Guid.NewGuid().ToString();
+		//	_methodIdsAndResults.Add(ID, ReturnTypes._NotReturned);
+		//	try
+		//	{
+		//		await _writeOnlyPipeExtension.WriteAsync
+		//			(Sender + breakchar + ID + breakchar + methodName + breakchar + string.Join(breakchar, args));
+		//	}
+		//	catch (OperationCanceledException ex)
+		//	{
+		//		_methodIdsAndResults.Remove(ID);
+		//		return "";
+		//	}
+		//	// s , Id, method, args
+		//	while (true)
+		//	{
+		//		if (_methodIdsAndResults[ID] == ReturnTypes._NotReturned)
+		//		{
+		//			if (token.IsCancellationRequested)
+		//			{
+		//				_methodIdsAndResults.Remove(ID);
+		//				return "";
+		//			}
+		//			await Task.Delay(100);
+		//		}
+		//		else
+		//		{
+		//			break;
+		//		}
+		//	}
+		//	var returnValue = _methodIdsAndResults[ID];
+		//	_methodIdsAndResults.Remove(ID);
+		//	return returnValue;
+		//}	
+
+		public async Task<S> Send<S>(string methodName, CancellationToken token, params object[] args)
 		{
 			var ID = Guid.NewGuid().ToString();
 			_methodIdsAndResults.Add(ID, ReturnTypes._NotReturned);
 			try
 			{
-				await _writeOnlyPipeExtension.WriteAsync
-					(Sender + breakchar + ID + breakchar + methodName + breakchar + string.Join(breakchar, args));
+				var argss = args
+					.Select
+					(
+					a => string.Format("{0}{1}{2}", a.GetDataType().DataTypeToString(), breakchar, a.GetStringFromPrimitive())
+					); 
+				if (args.Length!=0)
+				{
+					await _writeOnlyPipeExtension.WriteAsync
+					(Sender + breakchar + ID + breakchar + methodName + breakchar + string.Join(breakchar, argss));
+
+				}
+				else
+				{
+					await _writeOnlyPipeExtension.WriteAsync
+					(Sender + breakchar + ID + breakchar + methodName);
+				}
+
 			}
 			catch (OperationCanceledException ex)
 			{
 				_methodIdsAndResults.Remove(ID);
-				return "";
+				return (S)typeof(S).GetDataType().GetPrimitive("");
 			}
 			// s , Id, method, args
 			while (true)
@@ -97,7 +152,7 @@ namespace FileMappingInterface
 					if (token.IsCancellationRequested)
 					{
 						_methodIdsAndResults.Remove(ID);
-						return "";
+						return (S)typeof(S).GetDataType().GetPrimitive("");
 					}
 					await Task.Delay(100);
 				}
@@ -108,7 +163,7 @@ namespace FileMappingInterface
 			}
 			var returnValue = _methodIdsAndResults[ID];
 			_methodIdsAndResults.Remove(ID);
-			return returnValue;
+			return (S)typeof(S).GetDataType().GetPrimitive(returnValue);
 		}
 	}
 }
