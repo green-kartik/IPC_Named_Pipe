@@ -9,6 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\ExampleTestClasses\ExampleTestClasses.csproj" />
     <ProjectReference Include="..\FileMappingInterface\FileMappingInterface.csproj" />
   </ItemGroup>
 

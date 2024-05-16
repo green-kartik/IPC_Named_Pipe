@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace FileMappingInterface
 {
-	public class WriteOnlyPipeExtension : IDisposable
+	public class WriteOnlyPipeExtension
 	{
 		private PipeStream _pipe;
 		private UnicodeEncoding _streamEncoding;
@@ -18,22 +18,12 @@ namespace FileMappingInterface
 			_streamEncoding = new UnicodeEncoding();
 		}
 
-		public void Dispose()
-		{
-			try
-			{
-				if (_pipe != null)
-				{
-					_pipe.Dispose();
-				}
-			}
-			catch(Exception ex) {
-				// already disposed
-			}
-		}
-
 		public async Task<bool> WriteAsync(string message, int CancelAfterInMilliseconds = 3000)
 		{
+			if (!_pipe.IsConnected)
+			{
+				return false;
+			}
 			if (string.IsNullOrEmpty(message))
 			{
 				message = "No message to send";

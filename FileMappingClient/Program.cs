@@ -1,13 +1,19 @@
 ﻿// See https://aka.ms/new-console-template for more information
+using ExampleTestClasses;
 using FileMappingClient;
 
 Console.WriteLine("I am Client!");
-using (var messagingService = new IPCClient())
+var testClass = new TestClass1();
+using (var messagingService = new IPCClient<TestClass1>(testClass))
 {
 	messagingService.MessageReceived += (sender, args) => Console.WriteLine(args.message);
 	messagingService.DoRun();
 	while (true)
 	{
-		await messagingService.WriteAsync(Console.ReadLine());
+		var name = nameof(testClass.GetTestValue);
+		var cancellationTokenSource = new CancellationTokenSource();
+		cancellationTokenSource.CancelAfter(TimeSpan.FromSeconds(5));
+		var arg = Console.ReadLine();
+		await messagingService.Send(name, cancellationTokenSource.Token, arg); // this test class should be different.
 	}
 }

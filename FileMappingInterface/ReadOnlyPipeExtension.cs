@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace FileMappingInterface
 {
-	public class ReadOnlyPipeExtension : IDisposable
+	public class ReadOnlyPipeExtension
 	{
 	    private PipeStream _pipe;
 		private readonly int _timeoutReadActionInMilliseconds;
@@ -30,7 +30,7 @@ namespace FileMappingInterface
 		}
 		private async Task ProcessMessages()
 		{
-			while (!_disposed)
+			while (_pipe.IsConnected)
 			{
 				byte[] bytes = new byte[4];
 				var mode = _pipe.ReadMode;
@@ -75,21 +75,6 @@ namespace FileMappingInterface
 				}
 				var message = _streamEncoding.GetString(messageInBytes);
 				MessageReceived?.Invoke(this, new MessageArgs(message));
-			}
-		}
-		public void Dispose()
-		{
-			try
-			{
-				_disposed = true;
-				if (_pipe != null)
-				{
-					_pipe.Dispose();
-				}
-			}
-			catch (Exception ex)
-			{
-				// already disposed
 			}
 		}
 	}

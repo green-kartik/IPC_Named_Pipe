@@ -8,15 +8,19 @@ using System.Threading.Tasks;
 using FileMappingInterface;
 namespace FileMappingClient
 {
-	internal class IPCClient  : IDisposable
+	internal class IPCClient<T> : IDisposable where T : class
 	{
 		public event EventHandler<MessageArgs>? MessageReceived;
 		private PipeStream _readOnlyPipe;
 		private ReadOnlyPipeExtension? _readOnlyPipeExtension;
 		private NamedPipeClientStream? _writeOnlyPipe;
 		private WriteOnlyPipeExtension? _writeOnlyPipeExtension;
-		public IPCClient()
+		private InteropPipe<T> _interop;
+		private T _interfaceMethods;
+
+		public IPCClient(T interfaceMethods)
 		{
+			this._interfaceMethods = interfaceMethods;
 			var readOnlyPipe = new NamedPipeClientStream(FileMappingConsts.SERVER_LOCATION, FileMappingConsts.PIPE_ONE_ClIENT_READ_SERVER_WRITE, PipeDirection.InOut);
 			Console.WriteLine("Connecting...");
 			readOnlyPipe.Connect(); // Connect to the pipe or throw an exception if unable to connect.
@@ -33,22 +37,23 @@ namespace FileMappingClient
 		public void DoRun()
 		{
 			_readOnlyPipeExtension = new ReadOnlyPipeExtension(this._readOnlyPipe);
-			_readOnlyPipeExtension.MessageReceived += MessageReceived;
 			_writeOnlyPipeExtension = new WriteOnlyPipeExtension(this._writeOnlyPipe);
+			_interop = new InteropPipe<T>(_interfaceMethods, _writeOnlyPipeExtension, _readOnlyPipeExtension);
+			_readOnlyPipeExtension.MessageReceived += MessageReceived;
 		}
 		public async Task<bool> WriteAsync(string message)
 		{
-			return await _writeOnlyPipeExtension?.WriteAsync(message);
+			return await _interop.WriteMessageAsync(message);
 		}
 		public void Dispose()
 		{
-
+			_readOnlyPipeExtension.MessageReceived -= MessageReceived;
 			_writeOnlyPipe?.Dispose();
-			_writeOnlyPipeExtension?.Dispose();
 			_readOnlyPipe?.Dispose();
-			_readOnlyPipeExtension?.Dispose();
 		}
-
-	
+		public async Task<string> Send(string methodName, CancellationToken token, params string[] args)
+		{
+			return await _interop.Send(methodName, token, args);
+		}
 	}
 }
