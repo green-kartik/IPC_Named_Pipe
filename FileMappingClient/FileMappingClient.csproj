@@ -10,7 +10,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ExampleTestClasses\ExampleTestClasses.csproj" />
-    <ProjectReference Include="..\FileMappingInterface\FileMappingInterface.csproj" />
+    <ProjectReference Include="..\IPCClient\IPCClient.csproj" />
   </ItemGroup>
 
 </Project>

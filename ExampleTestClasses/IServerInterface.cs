@@ -6,8 +6,8 @@ using System.Threading.Tasks;
 
 namespace ExampleTestClasses
 {
-	public interface ITestInterface1
+	public interface IServerInterface
 	{
-		string GetTestValue(string input);
+		public string GetServerAnswer(string input);
 	}
 }
