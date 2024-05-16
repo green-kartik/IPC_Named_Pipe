@@ -8,7 +8,7 @@ using (var messagingService = new IPCServer<ServerTestClass>(testClass,
 	FileMappingConsts.PIPE_ONE_ClIENT_READ_SERVER_WRITE,
 	FileMappingConsts.PIPE_TWO_CLIENT_WRITE_SERVER_READ))
 {
-	messagingService.MessageReceived += (sender, args) => Console.WriteLine(args.message);
+	//messagingService.MessageReceived += (sender, args) => Console.WriteLine(args.message);
 	messagingService.DoRun();
 	while (true)
 	{
